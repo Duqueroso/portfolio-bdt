@@ -1,0 +1,10 @@
+.buttonComponent {
+    width: 200px;
+    height: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    background-color: #0070f3;
+    color: white;
+}
