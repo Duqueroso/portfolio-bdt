@@ -42,6 +42,8 @@ const Projects = () => {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [pagination, setPagination] = useState<ProjectsResponse['pagination'] | null>(null);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   
   const projectsPerPage = 9;
 
@@ -105,6 +107,33 @@ const Projects = () => {
     return url;
   };
 
+  // Funciones para manejar el modal
+  const openModal = (project: Project) => {
+    setSelectedProject(project);
+    setIsModalOpen(true);
+    document.body.style.overflow = 'hidden'; // Prevenir scroll del body
+  };
+
+  const closeModal = () => {
+    setSelectedProject(null);
+    setIsModalOpen(false);
+    document.body.style.overflow = 'unset'; // Restaurar scroll del body
+  };
+
+  // Manejar tecla Escape para cerrar modal
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        closeModal();
+      }
+    };
+
+    if (isModalOpen) {
+      document.addEventListener('keydown', handleEscape);
+      return () => document.removeEventListener('keydown', handleEscape);
+    }
+  }, [isModalOpen]);
+
   if (loading) {
     return (
       <div className={styles.loadingContainer}>
@@ -128,7 +157,11 @@ const Projects = () => {
       {/* Grid de proyectos */}
       <div className={styles.projectsGrid}>
         {projects.map((project) => (
-          <div key={project._id} className={styles.projectCard}>
+          <div 
+            key={project._id} 
+            className={styles.projectCard}
+            onClick={() => openModal(project)}
+          >
             {/* Imagen del proyecto */}
             {project.image && (
               <div className={styles.imageContainer}>
@@ -227,6 +260,86 @@ const Projects = () => {
           <p>
             Mostrando {((currentPage - 1) * projectsPerPage) + 1} - {Math.min(currentPage * projectsPerPage, pagination.totalProjects)} de {pagination.totalProjects} proyectos
           </p>
+        </div>
+      )}
+
+      {/* Modal para mostrar detalles del proyecto */}
+      {isModalOpen && selectedProject && (
+        <div className={styles.modalOverlay} onClick={closeModal}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <button className={styles.closeButton} onClick={closeModal}>
+              ✕
+            </button>
+            
+            {/* Imagen del proyecto en el modal */}
+            {selectedProject.image && (
+              <div className={styles.modalImageContainer}>
+                <Image
+                  src={getGoogleDriveImageUrl(selectedProject.image)}
+                  alt={selectedProject.title}
+                  fill
+                  className={styles.modalImage}
+                  sizes="(max-width: 768px) 100vw, 80vw"
+                />
+              </div>
+            )}
+            
+            {/* Contenido del modal */}
+            <div className={styles.modalBody}>
+              <h2 className={styles.modalTitle}>{selectedProject.title}</h2>
+              <p className={styles.modalDescription}>{selectedProject.description}</p>
+              
+              {/* Tecnologías en el modal */}
+              <div className={styles.modalTechnologies}>
+                <h3>Tecnologías utilizadas:</h3>
+                <div className={styles.modalTechContainer}>
+                  {selectedProject.technologies.map((tech, index) => (
+                    <span key={index} className={styles.modalTechTag}>
+                      {tech}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Enlaces en el modal */}
+              <div className={styles.modalLinks}>
+                {selectedProject.demoUrl && (
+                  <a 
+                    href={selectedProject.demoUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className={styles.modalDemoLink}
+                  >
+                    🚀 Ver Demo en Vivo
+                  </a>
+                )}
+                {selectedProject.repoUrl && (
+                  <a 
+                    href={selectedProject.repoUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className={styles.modalRepoLink}
+                  >
+                    📝 Ver Código Fuente
+                  </a>
+                )}
+              </div>
+              
+              {/* Metadata en el modal */}
+              <div className={styles.modalMetadata}>
+                {selectedProject.category && (
+                  <div className={styles.modalMetaItem}>
+                    <strong>Categoría:</strong> {selectedProject.category}
+                  </div>
+                )}
+                {selectedProject.date && (
+                  <div className={styles.modalMetaItem}>
+                    <strong>Fecha:</strong> {selectedProject.date}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
